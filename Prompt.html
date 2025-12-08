@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 Prompt 收藏庫</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        .container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .tag { 
+            display: inline-block; background: #e3f2fd; color: #1976d2; 
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;
+        }
+        .title { font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+        .content { 
+            background: #f8f9fa; padding: 10px; border-radius: 5px; 
+            font-size: 14px; color: #555; white-space: pre-wrap; margin-bottom: 15px;
+        }
+        button { 
+            background: #007bff; color: white; border: none; padding: 10px; 
+            border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>📂 我的 Prompt 倉庫</h1>
+    <div id="app" class="container"><p style="text-align:center;width:100%">載入中...</p></div>
+
+    <script>
+        // ▼▼▼ 請把下面這串網址，換成你剛剛在 Google Sheet 複製的網址 ▼▼▼
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCQiPOJTtON0YTBo2z-9JkB8feiIkpzCYwoT0twzYeJrYNba_OBZS2c9H-Ps4dP625U_4CDn4wfaxi/pub?output=csv'; 
+        // ▲▲▲-------------------------------------------------------▲▲▲
+
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true,
+            complete: function(results) {
+                const container = document.getElementById('app');
+                container.innerHTML = '';
+                results.data.forEach(item => {
+                    if(!item.Title) return;
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div>
+                            <span class="tag">${item.Category || '未分類'}</span>
+                            <div class="title">${item.Title}</div>
+                            <div class="content">${item.Content}</div>
+                        </div>
+                        <button onclick="navigator.clipboard.writeText(\`${item.Content.replace(/`/g, "\\`")}\`).then(()=>alert('複製成功！'))">複製 Prompt</button>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
