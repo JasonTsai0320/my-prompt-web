@@ -6,8 +6,31 @@
     <title>我的 Prompt 收藏庫</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        h1 { text-align: center; color: #333; }
+        /* --- 基礎設定 --- */
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+
+        /* --- 控制區塊 (搜尋與分類) --- */
+        .controls { max-width: 1200px; margin: 0 auto 30px auto; text-align: center; }
+        
+        /* 搜尋框樣式 */
+        #search-box {
+            width: 100%; max-width: 400px; padding: 12px; font-size: 16px;
+            border: 2px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s;
+            margin-bottom: 20px;
+        }
+        #search-box:focus { border-color: #007bff; box-shadow: 0 0 8px rgba(0,123,255,0.2); }
+
+        /* 分類按鈕區 */
+        .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .filter-btn {
+            background: white; border: 1px solid #ddd; padding: 8px 16px; 
+            border-radius: 20px; cursor: pointer; color: #555; transition: 0.2s; font-size: 14px;
+        }
+        .filter-btn:hover { background: #f8f9fa; }
+        .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
+
+        /* --- 卡片區塊 (Grid 排版) --- */
         .container { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
@@ -15,60 +38,102 @@
             max-width: 1200px; 
             margin: 0 auto; 
         }
+
+        /* --- 卡片本體樣式 --- */
         .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            background: white; padding: 20px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             display: flex; flex-direction: column; justify-content: space-between;
+            transition: transform 0.2s;
+            height: 320px; /* ★ 固定卡片總高度，讓排版整齊 */
         }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
         .tag { 
             display: inline-block; background: #e3f2fd; color: #1976d2; 
-            padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;
+            padding: 4px 10px; border-radius: 15px; font-size: 12px; margin-bottom: 10px; font-weight: bold;
         }
-        .title { font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+        
+        .title { 
+            font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #333;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 標題太長自動變... */
+        }
+        
+        /* ★ 這裡控制提示詞內容的固定高度與捲軸 ★ */
         .content { 
-            background: #f8f9fa; padding: 10px; border-radius: 5px; 
-            font-size: 14px; color: #555; white-space: pre-wrap; margin-bottom: 15px;
+            background: #f8f9fa; padding: 12px; border-radius: 8px; 
+            font-size: 14px; color: #555; line-height: 1.6;
+            flex-grow: 1; /* 佔據剩餘空間 */
+            overflow-y: auto; /* 內容太多時出現垂直捲軸 */
+            margin-bottom: 15px;
+            border: 1px solid #eee;
         }
-        button { 
+
+        /* 美化捲軸 (Chrome/Safari) */
+        .content::-webkit-scrollbar { width: 6px; }
+        .content::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
+
+        button.copy-btn { 
             background: #007bff; color: white; border: none; padding: 10px; 
-            border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold;
+            border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s;
         }
-        button:hover { background: #0056b3; }
+        button.copy-btn:hover { background: #0056b3; }
+        button.copy-btn:active { transform: scale(0.98); }
+
     </style>
 </head>
 <body>
-    <h1>📂 我的 Prompt 倉庫</h1>
-    <div id="app" class="container"><p style="text-align:center;width:100%">載入中...</p></div>
+    <h1>🚀 AI Prompt 智能寶庫</h1>
+    
+    <div class="controls">
+        <input type="text" id="search-box" placeholder="🔍 搜尋提示詞關鍵字...">
+        <div id="category-filters" class="filter-buttons">
+            </div>
+    </div>
+
+    <div id="app" class="container">
+        <p style="text-align:center;width:100%;color:#888;">正在讀取資料庫...</p>
+    </div>
 
     <script>
-        // ▼▼▼ 請把下面這串網址，換成你剛剛在 Google Sheet 複製的網址 ▼▼▼
+        // ▼▼▼ 請務必將這裡換回您的 Google Sheet CSV 連結 ▼▼▼
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCQiPOJTtON0YTBo2z-9JkB8feiIkpzCYwoT0twzYeJrYNba_OBZS2c9H-Ps4dP625U_4CDn4wfaxi/pub?output=csv'; 
-        // ▲▲▲-------------------------------------------------------▲▲▲
+        // ▲▲▲---------------------------------------------▲▲▲
 
+        let allData = [];      // 儲存所有資料
+        let currentCat = '全部'; // 目前選擇的分類
+
+        // 初始化
         Papa.parse(csvUrl, {
             download: true,
             header: true,
             complete: function(results) {
-                const container = document.getElementById('app');
-                container.innerHTML = '';
-                results.data.forEach(item => {
-                    if(!item.Title) return;
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <div>
-                            <span class="tag">${item.Category || '未分類'}</span>
-                            <div class="title">${item.Title}</div>
-                            <div class="content">${item.Content}</div>
-                        </div>
-                        <button onclick="navigator.clipboard.writeText(\`${item.Content.replace(/`/g, "\\`")}\`).then(()=>alert('複製成功！'))">複製 Prompt</button>
-                    `;
-                    container.appendChild(card);
-                });
+                // 過濾掉標題為空的無效資料
+                allData = results.data.filter(item => item.Title);
+                initCategories(); // 建立分類按鈕
+                renderCards();    // 顯示卡片
+            },
+            error: function(err) {
+                console.error("Error:", err);
+                document.getElementById('app').innerHTML = '<p style="text-align:center">讀取失敗，請檢查連結</p>';
             }
         });
-    </script>
-</body>
-</html>
+
+        // 1. 自動建立分類按鈕
+        function initCategories() {
+            const categories = new Set(['全部']); // 使用 Set 自動去重
+            allData.forEach(item => {
+                if(item.Category) categories.add(item.Category.trim());
+            });
+
+            const filterContainer = document.getElementById('category-filters');
+            filterContainer.innerHTML = ''; // 清空
+
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `filter-btn ${cat === '全部' ? 'active' : ''}`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    // 切換按鈕樣式
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add
