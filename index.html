@@ -7,13 +7,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         /* --- 基礎設定 --- */
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-
-        /* --- 控制區塊 (搜尋與分類) --- */
-        .controls { max-width: 1200px; margin: 0 auto 30px auto; text-align: center; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; color: #333; }
         
-        /* 搜尋框樣式 */
+        /* --- 標題與控制區 --- */
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { margin: 0 0 20px 0; color: #2c3e50; }
+
+        .controls { max-width: 1200px; margin: 0 auto; text-align: center; }
+        
         #search-box {
             width: 100%; max-width: 400px; padding: 12px; font-size: 16px;
             border: 2px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s;
@@ -21,7 +22,6 @@
         }
         #search-box:focus { border-color: #007bff; box-shadow: 0 0 8px rgba(0,123,255,0.2); }
 
-        /* 分類按鈕區 */
         .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         .filter-btn {
             background: white; border: 1px solid #ddd; padding: 8px 16px; 
@@ -30,7 +30,16 @@
         .filter-btn:hover { background: #f8f9fa; }
         .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
 
-        /* --- 卡片區塊 (Grid 排版) --- */
+        /* --- 分區標題樣式 --- */
+        .section-header {
+            max-width: 1200px; margin: 40px auto 20px auto;
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 10px; border-bottom: 2px solid #eee;
+        }
+        .section-header h2 { margin: 0; font-size: 1.5em; color: #444; }
+        .section-icon { font-size: 1.5em; }
+
+        /* --- 卡片區塊 --- */
         .container { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
@@ -39,15 +48,20 @@
             margin: 0 auto; 
         }
 
-        /* --- 卡片本體樣式 --- */
+        /* --- 卡片樣式 (固定高度) --- */
         .card { 
             background: white; padding: 20px; border-radius: 12px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             display: flex; flex-direction: column; justify-content: space-between;
             transition: transform 0.2s;
-            height: 320px; /* ★ 固定卡片總高度，讓排版整齊 */
+            height: 350px; 
+            border-top: 5px solid #ddd; /* 預設頂部顏色 */
         }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+        /* 根據不同類型給予不同顏色標示 */
+        .card.type-thinking { border-top-color: #9c27b0; } /* 紫色：協思 */
+        .card.type-assistant { border-top-color: #28a745; } /* 綠色：助理 */
 
         .tag { 
             display: inline-block; background: #e3f2fd; color: #1976d2; 
@@ -56,20 +70,15 @@
         
         .title { 
             font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #333;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 標題太長自動變... */
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         
-        /* ★ 這裡控制提示詞內容的固定高度與捲軸 ★ */
         .content { 
             background: #f8f9fa; padding: 12px; border-radius: 8px; 
             font-size: 14px; color: #555; line-height: 1.6;
-            flex-grow: 1; /* 佔據剩餘空間 */
-            overflow-y: auto; /* 內容太多時出現垂直捲軸 */
-            margin-bottom: 15px;
-            border: 1px solid #eee;
+            flex-grow: 1; overflow-y: auto; margin-bottom: 15px;
+            border: 1px solid #eee; white-space: pre-wrap;
         }
-
-        /* 美化捲軸 (Chrome/Safari) */
         .content::-webkit-scrollbar { width: 6px; }
         .content::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
 
@@ -78,62 +87,185 @@
             border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s;
         }
         button.copy-btn:hover { background: #0056b3; }
-        button.copy-btn:active { transform: scale(0.98); }
-
     </style>
 </head>
 <body>
-    <h1>🚀 AI Prompt 智能寶庫</h1>
-    
-    <div class="controls">
-        <input type="text" id="search-box" placeholder="🔍 搜尋提示詞關鍵字...">
-        <div id="category-filters" class="filter-buttons">
-            </div>
+    <header>
+        <h1>🚀 AI Prompt 智能寶庫</h1>
+        <div class="controls">
+            <input type="text" id="search-box" placeholder="🔍 搜尋提示詞關鍵字...">
+            <div id="category-filters" class="filter-buttons"></div>
+        </div>
+    </header>
+
+    <div id="section-thinking-wrapper" style="display:none;">
+        <div class="section-header">
+            <span class="section-icon">🧠</span>
+            <h2>AI 協思</h2>
+        </div>
+        <div id="container-thinking" class="container"></div>
     </div>
 
-    <div id="app" class="container">
-        <p style="text-align:center;width:100%;color:#888;">正在讀取資料庫...</p>
+    <div id="section-assistant-wrapper" style="display:none;">
+        <div class="section-header">
+            <span class="section-icon">🤖</span>
+            <h2>AI 助理</h2>
+        </div>
+        <div id="container-assistant" class="container"></div>
+    </div>
+
+    <div id="loading-msg">
+        <p style="text-align:center;width:100%;color:#888;margin-top:50px;">正在讀取資料庫...</p>
     </div>
 
     <script>
-        // ▼▼▼ 請務必將這裡換回您的 Google Sheet CSV 連結 ▼▼▼
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXXXXXXXXXXXX/pub?output=csv'; 
-        // ▲▲▲---------------------------------------------▲▲▲
+        // ▼▼▼ 請務必換回您的 Google Sheet 連結 ▼▼▼
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/XXXXXX/pub?output=csv'; 
+        // ▲▲▲----------------------------------▲▲▲
 
-        let allData = [];      // 儲存所有資料
-        let currentCat = '全部'; // 目前選擇的分類
+        let allData = [];
+        let currentCat = '全部';
 
-        // 初始化
         Papa.parse(csvUrl, {
             download: true,
             header: true,
             complete: function(results) {
-                // 過濾掉標題為空的無效資料
+                // 過濾標題為空的資料
                 allData = results.data.filter(item => item.Title);
-                initCategories(); // 建立分類按鈕
-                renderCards();    // 顯示卡片
+                initCategories();
+                renderCards();
+                document.getElementById('loading-msg').style.display = 'none'; // 隱藏讀取文字
             },
             error: function(err) {
                 console.error("Error:", err);
-                document.getElementById('app').innerHTML = '<p style="text-align:center">讀取失敗，請檢查連結</p>';
+                document.getElementById('loading-msg').innerHTML = '<p style="text-align:center">讀取失敗，請檢查連結</p>';
             }
         });
 
-        // 1. 自動建立分類按鈕
         function initCategories() {
-            const categories = new Set(['全部']); // 使用 Set 自動去重
-            allData.forEach(item => {
-                if(item.Category) categories.add(item.Category.trim());
-            });
+            const categories = new Set(['全部']);
+            allData.forEach(item => { if(item.Category) categories.add(item.Category.trim()); });
 
             const filterContainer = document.getElementById('category-filters');
-            filterContainer.innerHTML = ''; // 清空
+            filterContainer.innerHTML = '';
 
             categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.className = `filter-btn ${cat === '全部' ? 'active' : ''}`;
                 btn.innerText = cat;
                 btn.onclick = () => {
-                    // 切換按鈕樣式
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add
+                    btn.classList.add('active');
+                    currentCat = cat;
+                    renderCards();
+                };
+                filterContainer.appendChild(btn);
+            });
+        }
+
+        document.getElementById('search-box').addEventListener('input', (e) => {
+            renderCards(e.target.value.toLowerCase());
+        });
+
+        function renderCards(keyword = '') {
+            const containerThinking = document.getElementById('container-thinking');
+            const containerAssistant = document.getElementById('container-assistant');
+            const wrapperThinking = document.getElementById('section-thinking-wrapper');
+            const wrapperAssistant = document.getElementById('section-assistant-wrapper');
+
+            containerThinking.innerHTML = '';
+            containerAssistant.innerHTML = '';
+
+            // 1. 篩選資料 (分類 + 關鍵字)
+            const filteredData = allData.filter(item => {
+                const matchCategory = currentCat === '全部' || item.Category === currentCat;
+                const matchKeyword = (item.Title + item.Content).toLowerCase().includes(keyword);
+                return matchCategory && matchKeyword;
+            });
+
+            // 2. 依照 Type 分配到不同區塊
+            let countThinking = 0;
+            let countAssistant = 0;
+
+            filteredData.forEach((item, index) => {
+                // 判斷這一筆資料屬於哪一區 (預設為助理，如果沒填寫的話)
+                const isThinking = item.Type && item.Type.includes('AI 協思');
+                
+                const card = document.createElement('div');
+                // 根據類型給予不同的 CSS class，這樣可以加上不同顏色的邊框
+                card.className = `card ${isThinking ? 'type-thinking' : 'type-assistant'}`;
+                
+                card.innerHTML = `
+                    <div style="display:flex; flex-direction:column; height:100%;">
+                        <div style="flex-shrink:0;">
+                            <span class="tag">${item.Category || '一般'}</span>
+                            <div class="title" title="${item.Title}">${item.Title}</div>
+                        </div>
+                        <div class="content">${escapeHtml(item.Content)}</div>
+                        <div style="flex-shrink:0;">
+                            <button class="copy-btn" id="btn-${index}" onclick="copyCard(${index})">
+                                複製 Prompt
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // 根據類型放入不同容器
+                if (isThinking) {
+                    containerThinking.appendChild(card);
+                    countThinking++;
+                } else {
+                    containerAssistant.appendChild(card);
+                    countAssistant++;
+                }
+            });
+
+            // 3. 自動隱藏沒有內容的區塊
+            wrapperThinking.style.display = countThinking > 0 ? 'block' : 'none';
+            wrapperAssistant.style.display = countAssistant > 0 ? 'block' : 'none';
+
+            // 如果全部都沒東西
+            if (countThinking === 0 && countAssistant === 0) {
+                 // 這裡可以選擇是否顯示「找不到資料」，但為了版面乾淨我們先留白
+            }
+        }
+
+        // 用原本的全域資料索引來複製，避免篩選後索引跑掉，這裡稍微改寫邏輯確保正確
+        function copyCard(index) {
+            // 注意：這裡的 index 是 filteredData 當下的順序，
+            // 為了簡單起見，我們直接把內容塞在 HTML 的 onclick 裡其實最快，
+            // 但為了安全，我們回頭去 allData 找有點麻煩。
+            // 這裡我使用一個小技巧：直接去抓該按鈕所在卡片的內容 DOM
+            
+            // 修正：上面的 render 邏輯裡，我用全域 index 比較安全，但為了更穩，
+            // 我們直接把 content 存在 data attribute 比較保險。
+            // 不過既然這是一個輕量網站，我直接修改上面的 onclick 行為：
+            
+            // 讓我動態獲取要複製的內容，這樣最穩：
+            const btn = document.getElementById(`btn-${index}`);
+            // 找到按鈕往上兩層(card)裡面的 content class
+            const cardContent = btn.closest('.card').querySelector('.content').innerText;
+
+            navigator.clipboard.writeText(cardContent).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "✅ 已複製！";
+                btn.style.background = "#28a745";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#007bff";
+                }, 1500);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
