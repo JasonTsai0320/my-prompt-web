@@ -13,12 +13,32 @@
         .filter-label { font-weight: bold; color: #555; margin-right: 10px; min-width: 50px; }
         .filter-btn { border: 1px solid #dee2e6; color: #555; background: white; border-radius: 20px; padding: 5px 15px; font-size: 0.9rem; transition: all 0.2s; cursor: pointer; user-select: none; }
         .filter-btn:hover { background: #e9ecef; }
-        .filter-btn.active { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3); }
+        .filter-btn.active { background: #495057; color: white; border-color: #495057; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; height: 100%; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; height: 100%; overflow: hidden; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .card-header-custom { background: linear-gradient(135deg, #0d6efd, #0a58ca); color: white; border-radius: 12px 12px 0 0 !important; padding: 15px; font-weight: bold; }
         
+        /* 標題基礎樣式 */
+        .card-header-custom { color: white; padding: 15px; font-weight: bold; border: none; }
+        
+        /* --- 顏色設定區 --- */
+        
+        /* 1. 淺紅色系 (1開頭) */
+        .header-type-1 { background: linear-gradient(135deg, #ff8a80, #e53935); }
+        
+        /* 2. 藍色系/Teal (2開頭) */
+        .header-type-2 { background: linear-gradient(135deg, #20c997, #0d6efd); }
+        
+        /* 3. 橘紅系 (3開頭) */
+        .header-type-3 { background: linear-gradient(135deg, #ff9f43, #ee5253); }
+        
+        /* 4. 淺紫色系/Indigo (4開頭) */
+        .header-type-4 { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+        
+        /* 其他 (Fallback) */
+        .header-type-default { background: linear-gradient(135deg, #6c757d, #343a40); }
+        /* ---------------- */
+
         .btn-resource { width: 100%; margin-bottom: 8px; text-align: left; position: relative; font-weight: 500; }
         .btn-resource i { margin-right: 8px; width: 20px; text-align: center; }
         
@@ -56,10 +76,10 @@
     let allData = [];
     let activeFilters = {};
 
-    // 欄位對應 (根據您的表格位置，A=0)
+    // 欄位對應
     const COL_TITLE = 3;  // D欄 課程檔案
-    const COL_TAGS = [6, 9, 10, 11, 12]; // G(主題), J(對象), K(時數), L(形式), M(難度)
-    const TAG_NAMES = { 6:'主題', 9:'對象', 10:'時數', 11:'形式', 12:'難度' }; // 顯示名稱
+    const COL_TAGS = [6, 9, 10, 11, 12]; // G, J, K, L, M
+    const TAG_NAMES = { 6:'主題', 9:'對象', 10:'時數', 11:'形式', 12:'難度' }; 
     
     // 連結欄位 (U, V, W)
     const COL_LINK_PPT = 20; // U欄
@@ -69,11 +89,16 @@
     // 1. 初始化：讀取 CSV
     Papa.parse(csvUrl, {
         download: true,
-        header: false, // 不使用標題對應，直接用欄位順序，比較保險
+        header: false,
         complete: function(results) {
             const rows = results.data;
-            // 去除第一列標題，並過濾掉空行
-            allData = rows.slice(1).filter(row => row[COL_TITLE] && row[COL_TITLE].trim() !== '');
+            
+            // 設定只讀取 row 2 到 row 80 (index 1 ~ 79)
+            // 避免讀取到第 80 列以後的雜訊
+            let rawData = rows.slice(1, 80); 
+
+            // 過濾掉標題是空的行
+            allData = rawData.filter(row => row[COL_TITLE] && row[COL_TITLE].trim() !== '');
             
             initFilters();
             renderCards(allData);
@@ -88,10 +113,9 @@
     // 2. 初始化篩選器
     function initFilters() {
         const container = document.getElementById('filterContainer');
-        container.innerHTML = ''; // 清空 Loading
+        container.innerHTML = ''; 
 
         COL_TAGS.forEach(colIndex => {
-            // 找出該欄位所有不重複的選項
             const uniqueValues = [...new Set(allData.map(row => row[colIndex]))].filter(v => v).sort();
             
             if (uniqueValues.length > 0) {
@@ -117,30 +141,25 @@
 
     // 3. 切換篩選狀態
     function toggleFilter(colIndex, val, btn) {
-        // 如果還沒建立這個欄位的陣列
         if (!activeFilters[colIndex]) activeFilters[colIndex] = [];
 
         const index = activeFilters[colIndex].indexOf(val);
         if (index === -1) {
-            activeFilters[colIndex].push(val); // 加入條件
+            activeFilters[colIndex].push(val); 
             btn.classList.add('active');
         } else {
-            activeFilters[colIndex].splice(index, 1); // 移除條件
+            activeFilters[colIndex].splice(index, 1); 
             btn.classList.remove('active');
         }
         
-        // 如果該欄位沒條件了，就刪除 key
         if (activeFilters[colIndex].length === 0) delete activeFilters[colIndex];
-
         filterData();
     }
 
-    // 4. 執行篩選並重新渲染
+    // 4. 執行篩選
     function filterData() {
         const filtered = allData.filter(row => {
-            // 檢查每一個有設定篩選的欄位
             return Object.keys(activeFilters).every(colIndex => {
-                // 該列的資料是否包含在篩選條件中
                 return activeFilters[colIndex].includes(row[colIndex]);
             });
         });
@@ -154,7 +173,7 @@
         renderCards(allData);
     }
 
-    // 6. 渲染卡片核心邏輯
+    // 6. 渲染卡片 (包含顏色判斷)
     function renderCards(data) {
         const container = document.getElementById('cardContainer');
         container.innerHTML = '';
@@ -165,31 +184,38 @@
         }
 
         data.forEach(row => {
-            // 產生標籤 HTML
+            // --- 顏色判斷邏輯 ---
+            const title = row[COL_TITLE];
+            const firstChar = title.trim().charAt(0); // 抓取第一個字
+            
+            let headerClass = 'header-type-default'; // 預設
+            
+            if (firstChar === '1') {
+                headerClass = 'header-type-1'; // 淺紅
+            } else if (firstChar === '2') {
+                headerClass = 'header-type-2'; // 藍/Teal
+            } else if (firstChar === '3') {
+                headerClass = 'header-type-3'; // 橘紅
+            } else if (firstChar === '4') {
+                headerClass = 'header-type-4'; // 淺紫
+            }
+            // ------------------
+
             let tagsHtml = '';
             COL_TAGS.forEach(colIndex => {
                 if(row[colIndex]) tagsHtml += `<span class="badge badge-custom">${row[colIndex]}</span>`;
             });
 
-            // 產生按鈕 HTML (檢查網址是否存在)
             let buttonsHtml = '';
-            
-            // 簡報 (U欄)
             if (row[COL_LINK_PPT] && row[COL_LINK_PPT].startsWith('http')) {
                 buttonsHtml += `<a href="${row[COL_LINK_PPT]}" target="_blank" class="btn btn-outline-primary btn-resource"><i class="far fa-file-powerpoint"></i> 課程簡報</a>`;
             }
-            
-            // 講義 (V欄)
             if (row[COL_LINK_DOC] && row[COL_LINK_DOC].startsWith('http')) {
                 buttonsHtml += `<a href="${row[COL_LINK_DOC]}" target="_blank" class="btn btn-outline-success btn-resource"><i class="far fa-file-alt"></i> 課程講義</a>`;
             }
-
-            // 教材 (W欄)
             if (row[COL_LINK_MAT] && row[COL_LINK_MAT].startsWith('http')) {
                 buttonsHtml += `<a href="${row[COL_LINK_MAT]}" target="_blank" class="btn btn-outline-warning btn-resource text-dark"><i class="fas fa-book"></i> 參考教材</a>`;
             }
-
-            // 如果三個都沒填，顯示提示
             if (buttonsHtml === '') {
                 buttonsHtml = '<div class="text-muted small text-center py-2">尚無連結資料</div>';
             }
@@ -197,8 +223,8 @@
             const card = `
                 <div class="col">
                     <div class="card h-100">
-                        <div class="card-header-custom">
-                            ${row[COL_TITLE]}
+                        <div class="card-header-custom ${headerClass}">
+                            ${title}
                         </div>
                         <div class="card-body">
                             ${buttonsHtml}
