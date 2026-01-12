@@ -10,10 +10,10 @@
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; color: #333; }
         
         /* --- 標題與控制區 --- */
-        header { text-align: center; margin-bottom: 40px; }
-        h1 { margin: 0 0 10px 0; color: #2c3e50; } /* 稍微縮小下方間距給連結用 */
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { margin: 0 0 10px 0; color: #2c3e50; }
 
-        /* 新增：來源連結樣式 */
+        /* 來源連結樣式 */
         .source-link {
             display: inline-block;
             margin-bottom: 25px;
@@ -23,31 +23,47 @@
             border-bottom: 1px dashed #999;
             transition: 0.3s;
         }
-        .source-link:hover {
-            color: #007bff;
-            border-bottom-color: #007bff;
-        }
+        .source-link:hover { color: #007bff; border-bottom-color: #007bff; }
 
         .controls { max-width: 1200px; margin: 0 auto; text-align: center; }
         
         #search-box {
             width: 100%; max-width: 400px; padding: 12px; font-size: 16px;
             border: 2px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         #search-box:focus { border-color: #007bff; box-shadow: 0 0 8px rgba(0,123,255,0.2); }
 
-        .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        /* --- 按鈕容器 --- */
+        .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 10px;}
+        
+        /* 大分類按鈕 */
         .filter-btn {
             background: white; border: 1px solid #ddd; padding: 8px 16px; 
             border-radius: 20px; cursor: pointer; color: #555; transition: 0.2s; font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .filter-btn:hover { background: #f8f9fa; }
-        .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
+        .filter-btn:hover { background: #f8f9fa; transform: translateY(-1px); }
+        .filter-btn.active { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 2px 8px rgba(0,123,255,0.3); }
 
-        /* --- 分區標題樣式 --- */
+        /* 小分類 (Title) 按鈕樣式 - 稍微小一點，顏色區隔 */
+        .sub-filter-btn {
+            font-size: 13px;
+            padding: 5px 14px;
+            border: 1px solid #e0e0e0;
+            background: #fdfdfd;
+            color: #666;
+        }
+        .sub-filter-btn.active {
+            background: #6c757d; /* 灰色系表示次級 */
+            color: white;
+            border-color: #6c757d;
+            box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3);
+        }
+
+        /* --- 分區標題 --- */
         .section-header {
-            max-width: 1200px; margin: 40px auto 20px auto;
+            max-width: 1200px; margin: 30px auto 15px auto;
             display: flex; align-items: center; gap: 10px;
             padding-bottom: 10px; border-bottom: 2px solid #eee;
         }
@@ -63,24 +79,24 @@
             margin: 0 auto; 
         }
 
-        /* --- 卡片樣式 (固定高度) --- */
+        /* --- 卡片本體 --- */
         .card { 
             background: white; padding: 20px; border-radius: 12px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             display: flex; flex-direction: column; justify-content: space-between;
             transition: transform 0.2s;
             height: 350px; 
-            border-top: 5px solid #ddd; /* 預設頂部顏色 */
+            border-top: 5px solid #ddd; 
         }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
 
-        /* 根據不同類型給予不同顏色標示 */
+        /* 類型顏色 */
         .card.type-thinking { border-top-color: #9c27b0; } /* 紫色：協思 */
         .card.type-assistant { border-top-color: #28a745; } /* 綠色：助理 */
 
         .tag { 
             display: inline-block; background: #e3f2fd; color: #1976d2; 
-            padding: 4px 10px; border-radius: 15px; font-size: 12px; margin-bottom: 10px; font-weight: bold;
+            padding: 4px 10px; border-radius: 15px; font-size: 12px; margin-bottom: 5px; font-weight: bold;
         }
         
         .title { 
@@ -109,11 +125,15 @@
         <h1>🚀 AI Prompt 智能寶庫</h1>
         
         <a href="https://docs.google.com/spreadsheets/d/1qtFTO8EF0DbyDFGLSIp1NhujNP85azXUO35TFbkcphs/edit?gid=1866209349#gid=1866209349" target="_blank" class="source-link">
-            📂 連結檔案 Google Sheet
+            📂 開啟原始資料 Google Sheet
         </a>
+
         <div class="controls">
-            <input type="text" id="search-box" placeholder="🔍 搜尋提示詞關鍵字...">
+            <input type="text" id="search-box" placeholder="🔍 搜尋提示詞...">
+            
             <div id="category-filters" class="filter-buttons"></div>
+            
+            <div id="subcategory-filters" class="filter-buttons" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #eee;"></div>
         </div>
     </header>
 
@@ -138,12 +158,12 @@
     </div>
 
     <script>
-        // ▼▼▼ 資料讀取連結 (維持不變，用於抓取 CSV 資料) ▼▼▼
+        // CSV 資料來源
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCQiPOJTtON0YTBo2z-9JkB8feiIkpzCYwoT0twzYeJrYNba_OBZS2c9H-Ps4dP625U_4CDn4wfaxi/pub?output=csv'; 
-        // ▲▲▲----------------------------------▲▲▲
 
         let allData = [];
-        let currentCat = '全部';
+        let currentCat = '全部'; // 大分類狀態
+        let currentSubCat = '全部'; // 小分類狀態 (對應 Title)
 
         Papa.parse(csvUrl, {
             download: true,
@@ -151,9 +171,9 @@
             complete: function(results) {
                 // 過濾標題為空的資料
                 allData = results.data.filter(item => item.Title);
-                initCategories();
+                initCategories(); // 這裡會初始化大分類
                 renderCards();
-                document.getElementById('loading-msg').style.display = 'none'; // 隱藏讀取文字
+                document.getElementById('loading-msg').style.display = 'none';
             },
             error: function(err) {
                 console.error("Error:", err);
@@ -161,6 +181,7 @@
             }
         });
 
+        // 1. 初始化大分類按鈕
         function initCategories() {
             const categories = new Set(['全部']);
             allData.forEach(item => { if(item.Category) categories.add(item.Category.trim()); });
@@ -172,20 +193,75 @@
                 const btn = document.createElement('button');
                 btn.className = `filter-btn ${cat === '全部' ? 'active' : ''}`;
                 btn.innerText = cat;
+                
+                // 點擊大分類
                 btn.onclick = () => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    // 移除所有大分類的 active
+                    document.querySelectorAll('#category-filters .filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    
+                    // 設定狀態
                     currentCat = cat;
+                    currentSubCat = '全部'; // 切換大分類時，重置小分類
+                    
+                    // 重新產生下方的小分類按鈕
+                    renderSubCategories(); 
                     renderCards();
                 };
                 filterContainer.appendChild(btn);
             });
         }
 
+        // 2. 渲染小分類按鈕 (根據 Title)
+        function renderSubCategories() {
+            const subContainer = document.getElementById('subcategory-filters');
+            subContainer.innerHTML = ''; // 清空舊的
+
+            // 如果選「全部」，則不顯示第二層
+            if (currentCat === '全部') {
+                subContainer.style.display = 'none';
+                return;
+            }
+
+            // 抓出目前大分類下的所有 Title 當作小分類
+            const subCats = new Set(['全部']);
+            allData.forEach(item => {
+                if (item.Category === currentCat && item.Title) {
+                    subCats.add(item.Title.trim());
+                }
+            });
+
+            // 如果該分類下只有「全部」(沒資料)，或只有 1 筆資料(沒必要篩選)，可以選擇隱藏
+            // 但為了操作一致性，這裡只要超過1個(含"全部")就顯示
+            if (subCats.size <= 1) {
+                subContainer.style.display = 'none';
+                return;
+            }
+
+            subContainer.style.display = 'flex';
+
+            subCats.forEach(sub => {
+                const btn = document.createElement('button');
+                // 加上 sub-filter-btn 樣式
+                btn.className = `filter-btn sub-filter-btn ${sub === '全部' ? 'active' : ''}`;
+                btn.innerText = sub;
+                
+                btn.onclick = () => {
+                    document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSubCat = sub;
+                    renderCards();
+                };
+                subContainer.appendChild(btn);
+            });
+        }
+
+        // 搜尋框監聽
         document.getElementById('search-box').addEventListener('input', (e) => {
             renderCards(e.target.value.toLowerCase());
         });
 
+        // 3. 渲染卡片 (核心邏輯)
         function renderCards(keyword = '') {
             const containerThinking = document.getElementById('container-thinking');
             const containerAssistant = document.getElementById('container-assistant');
@@ -195,23 +271,24 @@
             containerThinking.innerHTML = '';
             containerAssistant.innerHTML = '';
 
-            // 1. 篩選資料 (分類 + 關鍵字)
             const filteredData = allData.filter(item => {
+                // 1. 篩選大分類
                 const matchCategory = currentCat === '全部' || item.Category === currentCat;
+                // 2. 篩選小分類 (這裡是 Title)
+                const matchSubCategory = currentSubCat === '全部' || item.Title === currentSubCat;
+                // 3. 搜尋關鍵字
                 const matchKeyword = (item.Title + item.Content).toLowerCase().includes(keyword);
-                return matchCategory && matchKeyword;
+                
+                return matchCategory && matchSubCategory && matchKeyword;
             });
 
-            // 2. 依照 Type 分配到不同區塊
             let countThinking = 0;
             let countAssistant = 0;
 
             filteredData.forEach((item, index) => {
-                // 判斷這一筆資料屬於哪一區 (預設為助理，如果沒填寫的話)
                 const isThinking = item.Type && item.Type.includes('AI 協思');
                 
                 const card = document.createElement('div');
-                // 根據類型給予不同的 CSS class，這樣可以加上不同顏色的邊框
                 card.className = `card ${isThinking ? 'type-thinking' : 'type-assistant'}`;
                 
                 card.innerHTML = `
@@ -229,7 +306,6 @@
                     </div>
                 `;
 
-                // 根據類型放入不同容器
                 if (isThinking) {
                     containerThinking.appendChild(card);
                     countThinking++;
@@ -239,13 +315,13 @@
                 }
             });
 
-            // 3. 自動隱藏沒有內容的區塊
             wrapperThinking.style.display = countThinking > 0 ? 'block' : 'none';
             wrapperAssistant.style.display = countAssistant > 0 ? 'block' : 'none';
         }
 
         function copyCard(index) {
             const btn = document.getElementById(`btn-${index}`);
+            // 注意：這裡因為篩選過，直接用 DOM 抓內容最準確
             const cardContent = btn.closest('.card').querySelector('.content').innerText;
 
             navigator.clipboard.writeText(cardContent).then(() => {
