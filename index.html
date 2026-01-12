@@ -11,7 +11,22 @@
         
         /* --- 標題與控制區 --- */
         header { text-align: center; margin-bottom: 40px; }
-        h1 { margin: 0 0 20px 0; color: #2c3e50; }
+        h1 { margin: 0 0 10px 0; color: #2c3e50; } /* 稍微縮小下方間距給連結用 */
+
+        /* 新增：來源連結樣式 */
+        .source-link {
+            display: inline-block;
+            margin-bottom: 25px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px dashed #999;
+            transition: 0.3s;
+        }
+        .source-link:hover {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
 
         .controls { max-width: 1200px; margin: 0 auto; text-align: center; }
         
@@ -92,6 +107,10 @@
 <body>
     <header>
         <h1>🚀 AI Prompt 智能寶庫</h1>
+        
+        <a href="https://docs.google.com/spreadsheets/d/1qtFTO8EF0DbyDFGLSIp1NhujNP85azXUO35TFbkcphs/edit?gid=1866209349#gid=1866209349" target="_blank" class="source-link">
+            📂 開啟原始資料 Google Sheet
+        </a>
         <div class="controls">
             <input type="text" id="search-box" placeholder="🔍 搜尋提示詞關鍵字...">
             <div id="category-filters" class="filter-buttons"></div>
@@ -119,7 +138,7 @@
     </div>
 
     <script>
-        // ▼▼▼ 請務必換回您的 Google Sheet 連結 ▼▼▼
+        // ▼▼▼ 資料讀取連結 (維持不變，用於抓取 CSV 資料) ▼▼▼
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCQiPOJTtON0YTBo2z-9JkB8feiIkpzCYwoT0twzYeJrYNba_OBZS2c9H-Ps4dP625U_4CDn4wfaxi/pub?output=csv'; 
         // ▲▲▲----------------------------------▲▲▲
 
@@ -223,27 +242,10 @@
             // 3. 自動隱藏沒有內容的區塊
             wrapperThinking.style.display = countThinking > 0 ? 'block' : 'none';
             wrapperAssistant.style.display = countAssistant > 0 ? 'block' : 'none';
-
-            // 如果全部都沒東西
-            if (countThinking === 0 && countAssistant === 0) {
-                 // 這裡可以選擇是否顯示「找不到資料」，但為了版面乾淨我們先留白
-            }
         }
 
-        // 用原本的全域資料索引來複製，避免篩選後索引跑掉，這裡稍微改寫邏輯確保正確
         function copyCard(index) {
-            // 注意：這裡的 index 是 filteredData 當下的順序，
-            // 為了簡單起見，我們直接把內容塞在 HTML 的 onclick 裡其實最快，
-            // 但為了安全，我們回頭去 allData 找有點麻煩。
-            // 這裡我使用一個小技巧：直接去抓該按鈕所在卡片的內容 DOM
-            
-            // 修正：上面的 render 邏輯裡，我用全域 index 比較安全，但為了更穩，
-            // 我們直接把 content 存在 data attribute 比較保險。
-            // 不過既然這是一個輕量網站，我直接修改上面的 onclick 行為：
-            
-            // 讓我動態獲取要複製的內容，這樣最穩：
             const btn = document.getElementById(`btn-${index}`);
-            // 找到按鈕往上兩層(card)裡面的 content class
             const cardContent = btn.closest('.card').querySelector('.content').innerText;
 
             navigator.clipboard.writeText(cardContent).then(() => {
